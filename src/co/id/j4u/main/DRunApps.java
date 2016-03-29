@@ -43,7 +43,7 @@ public class DRunApps {
 		DbxClient client = null;
 		Cipher cipher = null;
 		String password = "jau";
-		String text = "bahahahahaha";
+		String text = "aku lapar sekali";
 		try {
 //			DbxRequestConfig config = new DbxRequestConfig("JavaTutorial/1.0", Locale.getDefault().toString());
 //			client = getClient(config, DConstants.APP.TOKEN);
@@ -53,19 +53,19 @@ public class DRunApps {
 			DEncrypt.generateKey(DConstants.ALGORITHM.AES, password);
 			file = new File(DConstants.DIR.CONFIG + DConstants.FILE.KEY);
 			SecretKeySpec keySpec = DEncrypt.getKeyFromFile(file, DConstants.ALGORITHM.AES);
-			System.out.println("Key : " + new String(keySpec.getEncoded()));
-			cipher = DEncrypt.createCipherEncrypt(DConstants.ALGORITHM.AES_CBC_NOPAD, keySpec);
+			System.out.println("Key : " + new String(Base64.encodeBase64(keySpec.getEncoded())));
+			cipher = DEncrypt.createCipherEncrypt(DConstants.ALGORITHM.AES_CBC_PKCS5PAD, keySpec);
 			DEncrypt.generateIV(cipher);
 			
 			file = new File(DConstants.DIR.CONFIG + DConstants.FILE.IV);
 			IvParameterSpec ivSpec = DEncrypt.getIVFromFile(file);
-			System.out.println("IV : " + new String(ivSpec.getIV()));
+			System.out.println("IV : " + new String(Base64.encodeBase64(ivSpec.getIV())));
 			
 			byte[] rawByte = text.getBytes();
 			byte[] data = Base64.encodeBase64(rawByte);
-			byte[] encrypt = DEncrypt.encrypt(DConstants.ALGORITHM.AES_CBC_NOPAD, keySpec, ivSpec, data);
-			System.out.println("Text Encrypt : " + encrypt);
-			byte[] decrypt = DEncrypt.decrypt(DConstants.ALGORITHM.AES_CBC_NOPAD, keySpec, ivSpec, encrypt);
+			byte[] encrypt = DEncrypt.encrypt(DConstants.ALGORITHM.AES_CBC_PKCS5PAD, keySpec, ivSpec, data);
+			System.out.println("Text Encrypt : " + new String(Base64.encodeBase64(encrypt)));
+			byte[] decrypt = DEncrypt.decrypt(DConstants.ALGORITHM.AES_CBC_PKCS5PAD, keySpec, ivSpec, encrypt);
 			rawByte = Base64.decodeBase64(decrypt);
 			text = new String(rawByte);
 			System.out.println("Text Decrypt : " + text);
