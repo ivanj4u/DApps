@@ -10,7 +10,16 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.Locale;
 
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+
+import org.apache.commons.codec.binary.Base64;
+
 import co.id.j4u.util.DConstants;
+import co.id.j4u.util.DEncrypt;
+import co.id.j4u.util.DFile;
 
 import com.dropbox.core.DbxAppInfo;
 import com.dropbox.core.DbxAuthFinish;
@@ -32,11 +41,34 @@ public class DRunApps {
 		FileInputStream in = null;
 		FileOutputStream out = null;
 		DbxClient client = null;
+		Cipher cipher = null;
+		String password = "jau";
+		String text = "bahahahahaha";
 		try {
-			DbxRequestConfig config = new DbxRequestConfig("JavaTutorial/1.0", Locale.getDefault().toString());
-			client = getClient(config, DConstants.APP.TOKEN);
+//			DbxRequestConfig config = new DbxRequestConfig("JavaTutorial/1.0", Locale.getDefault().toString());
+//			client = getClient(config, DConstants.APP.TOKEN);
 //			doUploadFile(file, in, "read.txt", client, false);
 //			doDownloadFile(out, "read.txt", client);
+			
+			DEncrypt.generateKey(DConstants.ALGORITHM.AES, password);
+			file = new File(DConstants.DIR.CONFIG + DConstants.FILE.KEY);
+			SecretKeySpec keySpec = DEncrypt.getKeyFromFile(file, DConstants.ALGORITHM.AES);
+			System.out.println("Key : " + new String(keySpec.getEncoded()));
+			cipher = DEncrypt.createCipherEncrypt(DConstants.ALGORITHM.AES_CBC_NOPAD, keySpec);
+			DEncrypt.generateIV(cipher);
+			
+			file = new File(DConstants.DIR.CONFIG + DConstants.FILE.IV);
+			IvParameterSpec ivSpec = DEncrypt.getIVFromFile(file);
+			System.out.println("IV : " + new String(ivSpec.getIV()));
+			
+			byte[] rawByte = text.getBytes();
+			byte[] data = Base64.encodeBase64(rawByte);
+			byte[] encrypt = DEncrypt.encrypt(DConstants.ALGORITHM.AES_CBC_NOPAD, keySpec, ivSpec, data);
+			System.out.println("Text Encrypt : " + encrypt);
+			byte[] decrypt = DEncrypt.decrypt(DConstants.ALGORITHM.AES_CBC_NOPAD, keySpec, ivSpec, encrypt);
+			rawByte = Base64.decodeBase64(decrypt);
+			text = new String(rawByte);
+			System.out.println("Text Decrypt : " + text);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -81,34 +113,6 @@ public class DRunApps {
 		System.out.println("Data Downloaded" + downloadFile.toString());
 		if (out != null)
 			out.close();
-	}
-	
-	private static void doReadFile(File file, FileInputStream in) throws IOException {
-		in = new FileInputStream(file);
-		BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-		
-		String s;
-		while((s = reader.readLine()) != null) {
-			System.out.println("Reading..." + s);
-		}
-		if (reader != null)
-			reader.close();
-		if (in != null)
-			in.close();
-		System.out.println("File Done...");
-	}
-	
-	private static void doWriteFile(File file, FileOutputStream out, String s) throws IOException {
-		out = new FileOutputStream(file);
-		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out));
-		writer.write(s);
-		writer.flush();
-		System.out.println("Writing...");
-		if (writer != null)
-			writer.close();
-		if (out != null)
-			out.close();
-		System.out.println("File Done...");
 	}
 	
 	private static void doReadWrite(FileInputStream in, FileOutputStream out, String fileName) throws IOException {
